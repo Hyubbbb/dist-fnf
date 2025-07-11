@@ -1,35 +1,29 @@
 """
-데이터 로드 및 전처리 모듈
+데이터 로드 및 전처리 모듈 (JSON 버전)
 """
 
 import pandas as pd
+import json
 import os
 from config import DATA_PATH
 
 
-def try_read_csv_with_encodings(file_path):
-    """여러 인코딩을 시도하여 CSV 파일을 읽습니다"""
-    encodings = ['utf-8', 'cp949', 'euc-kr', 'latin1', 'iso-8859-1']
-    
-    for encoding in encodings:
-        try:
-            df = pd.read_csv(file_path, encoding=encoding)
-            print(f"성공적으로 읽음: {file_path} (인코딩: {encoding})")
-            return df
-        except UnicodeDecodeError:
-            print(f"실패: {file_path} (인코딩: {encoding})")
-            continue
-        except Exception as e:
-            print(f"기타 오류: {file_path} (인코딩: {encoding}) - {e}")
-            continue
-    
-    raise ValueError(f"모든 인코딩 시도 실패: {file_path}")
+def try_read_json(file_path):
+    """JSON 파일을 읽습니다"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        print(f"성공적으로 읽음: {file_path}")
+        return data
+    except Exception as e:
+        print(f"JSON 읽기 실패: {file_path} - {e}")
+        raise
 
 
 class DataLoader:
-    """데이터 로드 및 전처리를 담당하는 클래스"""
+    """데이터 로드 및 전처리를 담당하는 클래스 (JSON 버전)"""
     
-    def __init__(self, data_path=DATA_PATH, sku_file='ord/ord.csv', store_file='shop/shop.csv'):
+    def __init__(self, data_path=DATA_PATH, sku_file='ord/ord.json', store_file='shop/shop.json'):
         self.data_path = data_path
         self.sku_file = sku_file
         self.store_file = store_file
@@ -39,21 +33,44 @@ class DataLoader:
         self.df_sku_filtered = None
         
     def load_data(self):
-        """기본 데이터 로드"""
-        # print("📊 데이터 로드 중...")
+        """JSON 데이터 로드"""
+        # print("📊 JSON 데이터 로드 중...")
         
-        # SKU 데이터 로드
-        sku_file = os.path.join(self.data_path, self.sku_file)
-        self.df_sku = try_read_csv_with_encodings(sku_file)
+        # SKU JSON 데이터 로드
+        sku_file_path = os.path.join(self.data_path, self.sku_file)
+        sku_json_data = try_read_json(sku_file_path)
         
-        # 매장 데이터 로드
-        store_file = os.path.join(self.data_path, self.store_file)
-        self.df_store = try_read_csv_with_encodings(store_file)
+        # JSON에서 DataFrame으로 변환
+        sku_records = []
+        for sku_record in sku_json_data['skus']:
+            sku_records.append({
+                'PART_CD': sku_record['part_cd'],
+                'COLOR_CD': sku_record['color_cd'],
+                'SIZE_CD': sku_record['size_cd'],
+                'ORD_QTY': sku_record['ord_qty']
+            })
+        self.df_sku = pd.DataFrame(sku_records)
+        
+        # 매장 JSON 데이터 로드
+        store_file_path = os.path.join(self.data_path, self.store_file)
+        store_json_data = try_read_json(store_file_path)
+        
+        # JSON에서 DataFrame으로 변환
+        store_records = []
+        for store_record in store_json_data['stores']:
+            store_records.append({
+                'SHOP_ID': store_record['shop_id'],
+                'SHOP_NM_SHORT': store_record['shop_name'],
+                'QTY_SUM': store_record['qty_sum'],
+                'YYMM': store_record.get('yymm', ''),
+                'MAX(SH.ANAL_DIST_TYPE_NM)': store_record.get('dist_type', '')
+            })
+        self.df_store = pd.DataFrame(store_records)
         
         # 매장 데이터를 QTY_SUM 기준 내림차순 정렬
         self.df_store = self.df_store.sort_values('QTY_SUM', ascending=False).reset_index(drop=True)
         
-        print(f"✅ 데이터 로드 완료 - SKU: {len(self.df_sku)}개, 매장: {len(self.df_store)}개")
+        print(f"✅ JSON 데이터 로드 완료 - SKU: {len(self.df_sku)}개, 매장: {len(self.df_store)}개")
         print(f"   SKU 파일: {self.sku_file}")
         print(f"   매장 파일: {self.store_file}")
         return self.df_sku, self.df_store

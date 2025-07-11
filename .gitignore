@@ -69,3 +69,6 @@ Thumbs.db
 *.bak
 *.backup
 *~ 
+
+# csv_to_json_converter.py
+csv_to_json_converter.py

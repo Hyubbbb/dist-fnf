@@ -19,7 +19,7 @@ from config import EXPERIMENT_SCENARIOS, DEFAULT_TARGET_STYLE, DEFAULT_SCENARIO
 
 def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARIO, 
                     show_detailed_output=False, create_visualizations=True,
-                    sku_file='ord/ord.csv', store_file='shop/shop.csv',
+                    sku_file='ord/ord.json', store_file='shop/shop.json',
                     save_allocation_results=True, save_experiment_summary=True,
                     save_png_matrices=True, save_excel_matrices=True):
     """
@@ -265,7 +265,7 @@ def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARI
 
 
 def run_batch_experiments(target_styles=None, scenarios=None, create_visualizations=True,
-                         sku_file='ord/ord.csv', store_file='shop/shop.csv',
+                         sku_file='ord/ord.json', store_file='shop/shop.json',
                          save_allocation_results=True, save_experiment_summary=True,
                          save_png_matrices=True, save_excel_matrices=True):
     """
@@ -368,8 +368,8 @@ if __name__ == "__main__":
     # run_batch_experiments(['DWDJ68046', 'DWDJ8P046', 'DXDJ8C046', 'DXMT33044'],
     run_batch_experiments(['DWWJ7D053'],
                           ['deterministic', 'temperature_50', 'random'],
-                          sku_file='ord/ord_real_25s_DWWJ7D053.csv',
-                          store_file='shop/shop_real_control_25s.csv',
+                          sku_file='ord/ord_real_25s_DWWJ7D053.json',
+                          store_file='shop/shop_real_control_25s.json',
                           save_allocation_results=True,      # allocation_results.csv 저장
                           save_experiment_summary=True,      # experiment_summary.txt 저장  
                           save_png_matrices=False,            # step별 PNG 매트릭스 저장
