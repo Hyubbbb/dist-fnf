@@ -31,10 +31,10 @@ class ResultAnalyzer:
         print("           📊 배분 결과 분석")
         print("="*50)
         
-        # 1. 매장별 커버리지 계산
+        # 1. 매장별 다양성 계산
         store_coverage = self._calculate_store_coverage(final_allocation, data, target_stores, df_sku_filtered)
         
-        # 2. 스타일별 컬러/사이즈 커버리지 계산
+        # 2. 스타일별 컬러/사이즈 다양성 계산
         style_coverage = self._calculate_style_coverage(store_coverage, data, target_stores)
         
         return {
@@ -43,7 +43,7 @@ class ResultAnalyzer:
         }
     
     def _calculate_store_coverage(self, final_allocation, data, target_stores, df_sku_filtered):
-        """매장별 커버리지 계산"""
+        """매장별 다양성 계산"""
         K_s = data['K_s']
         L_s = data['L_s']
         
@@ -76,7 +76,7 @@ class ResultAnalyzer:
         return store_coverage
     
     def _calculate_style_coverage(self, store_coverage, data, target_stores):
-        """스타일별 컬러/사이즈 커버리지 계산"""
+        """스타일별 컬러/사이즈 다양성 계산"""
         K_s = data['K_s']
         L_s = data['L_s']
         s = self.target_style
@@ -84,14 +84,14 @@ class ResultAnalyzer:
         total_colors = len(K_s[s])
         total_sizes = len(L_s[s])
         
-        # 색상 커버리지 비율
+        # 색상 다양성
         color_ratios = []
         for j in target_stores:
             covered_colors = len(store_coverage[j]['colors'])
             ratio = covered_colors / total_colors if total_colors > 0 else 0
             color_ratios.append(ratio)
         
-        # 사이즈 커버리지 비율
+        # 사이즈 다양성
         size_ratios = []
         for j in target_stores:
             covered_sizes = len(store_coverage[j]['sizes'])

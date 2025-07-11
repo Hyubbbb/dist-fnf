@@ -29,7 +29,7 @@ def try_read_csv_with_encodings(file_path):
 class DataLoader:
     """데이터 로드 및 전처리를 담당하는 클래스"""
     
-    def __init__(self, data_path=DATA_PATH, sku_file='발주수량.csv', store_file='매장데이터.csv'):
+    def __init__(self, data_path=DATA_PATH, sku_file='ord/ord.csv', store_file='shop/shop.csv'):
         self.data_path = data_path
         self.sku_file = sku_file
         self.store_file = store_file

@@ -34,10 +34,6 @@ class ExperimentManager:
         
         file_paths = {
             'allocation_results': os.path.join(experiment_folder, f"{file_prefix}_allocation_results.csv"),
-            'store_summary': os.path.join(experiment_folder, f"{file_prefix}_store_summary.csv"),
-            'style_analysis': os.path.join(experiment_folder, f"{file_prefix}_style_analysis.csv"),
-            'top_performers': os.path.join(experiment_folder, f"{file_prefix}_top_performers.csv"),
-            'scarce_effectiveness': os.path.join(experiment_folder, f"{file_prefix}_scarce_effectiveness.csv"),
             'experiment_params': os.path.join(experiment_folder, f"{file_prefix}_experiment_params.json"),
             'experiment_summary': os.path.join(experiment_folder, f"{file_prefix}_experiment_summary.txt")
         }
@@ -45,71 +41,27 @@ class ExperimentManager:
         return experiment_folder, file_paths
     
     def save_experiment_results(self, file_paths, df_results, analysis_results, params, 
-                              scenario_name, optimization_summary):
+                              scenario_name, optimization_summary, save_allocation_results=True, 
+                              save_experiment_summary=True):
         """실험 결과 저장"""
         
         print(f"\n💾 실험 결과 저장 중...")
         
         try:
-            # 1. 할당 결과 CSV 저장
-            if len(df_results) > 0:
+            # 1. 할당 결과 CSV 저장 (옵션)
+            if save_allocation_results and len(df_results) > 0:
                 df_results.to_csv(file_paths['allocation_results'], index=False, encoding='utf-8-sig')
                 print(f"   ✅ 할당 결과: {os.path.basename(file_paths['allocation_results'])}")
             
-            # 2. 매장별 요약 저장
-            if 'performance_analysis' in analysis_results:
-                performance_data = analysis_results['performance_analysis']['all_performance']
-                df_store_summary = pd.DataFrame(performance_data)
-                df_store_summary.to_csv(file_paths['store_summary'], index=False, encoding='utf-8-sig')
-                print(f"   ✅ 매장 요약: {os.path.basename(file_paths['store_summary'])}")
-            
-            # 3. 스타일 분석 저장
-            if 'style_coverage' in analysis_results:
-                style_data = self._create_style_analysis_df(analysis_results)
-                style_data.to_csv(file_paths['style_analysis'], index=False, encoding='utf-8-sig')
-                print(f"   ✅ 스타일 분석: {os.path.basename(file_paths['style_analysis'])}")
-            
-            # 4. 상위 성과자 저장
-            if 'performance_analysis' in analysis_results:
-                top_performers = analysis_results['performance_analysis']['top_performers']
-                df_top = pd.DataFrame(top_performers)
-                df_top.to_csv(file_paths['top_performers'], index=False, encoding='utf-8-sig')
-                print(f"   ✅ 상위 성과자: {os.path.basename(file_paths['top_performers'])}")
-            
-            # 5. 희소 SKU 효과성 저장
-            if 'scarce_analysis' in analysis_results:
-                df_scarce = pd.DataFrame(analysis_results['scarce_analysis'])
-                df_scarce.to_csv(file_paths['scarce_effectiveness'], index=False, encoding='utf-8-sig')
-                print(f"   ✅ 희소 SKU 효과성: {os.path.basename(file_paths['scarce_effectiveness'])}")
-            
-            # 6. 실험 메타데이터 저장
-            self._save_experiment_metadata(file_paths, scenario_name, params, optimization_summary, analysis_results)
+            # 2. 실험 메타데이터 저장 (옵션)
+            if save_experiment_summary:
+                self._save_experiment_metadata(file_paths, scenario_name, params, optimization_summary, analysis_results)
             
             print(f"📁 실험 '{scenario_name}' 결과 저장 완료!")
             
         except Exception as e:
             print(f"❌ 실험 결과 저장 실패: {str(e)}")
             raise
-    
-    def _create_style_analysis_df(self, analysis_results):
-        """스타일 분석 데이터프레임 생성"""
-        style_coverage = analysis_results['style_coverage']
-        
-        style_data = [{
-            'Metric': 'Color Coverage',
-            'Average': style_coverage['color_coverage']['avg_ratio'],
-            'Maximum': style_coverage['color_coverage']['max_ratio'],
-            'Minimum': style_coverage['color_coverage']['min_ratio'],
-            'Total_Count': style_coverage['color_coverage']['total_colors']
-        }, {
-            'Metric': 'Size Coverage',
-            'Average': style_coverage['size_coverage']['avg_ratio'],
-            'Maximum': style_coverage['size_coverage']['max_ratio'],
-            'Minimum': style_coverage['size_coverage']['min_ratio'],
-            'Total_Count': style_coverage['size_coverage']['total_sizes']
-        }   ]
-        
-        return pd.DataFrame(style_data)
     
     def _save_experiment_metadata(self, file_paths, scenario_name, params, optimization_summary, analysis_results):
         """실험 메타데이터 저장"""
@@ -150,6 +102,27 @@ class ExperimentManager:
     def _create_summary_text(self, scenario_name, params, optimization_summary, analysis_results):
         """실험 요약 텍스트 생성"""
         
+        # 색상/사이즈 다양성 정보 추출
+        coverage_info = ""
+        if 'style_coverage' in analysis_results:
+            style_coverage = analysis_results['style_coverage']
+            color_coverage = style_coverage.get('color_coverage', {})
+            size_coverage = style_coverage.get('size_coverage', {})
+            
+            coverage_info = f"""
+📊 다양성 분석:
+- 색상 다양성:
+  * 평균: {color_coverage.get('avg_ratio', 0):.3f}
+  * 최대: {color_coverage.get('max_ratio', 0):.3f}
+  * 최소: {color_coverage.get('min_ratio', 0):.3f}
+  * 총 색상 수: {color_coverage.get('total_colors', 0)}개
+- 사이즈 다양성:
+  * 평균: {size_coverage.get('avg_ratio', 0):.3f}
+  * 최대: {size_coverage.get('max_ratio', 0):.3f}
+  * 최소: {size_coverage.get('min_ratio', 0):.3f}
+  * 총 사이즈 수: {size_coverage.get('total_sizes', 0)}개
+"""
+        
         summary_text = f"""
 ========================================
 실험 결과 요약 - {scenario_name}
@@ -160,35 +133,17 @@ class ExperimentManager:
 설명: {params.get('description', 'N/A')}
 
 📊 실험 파라미터:
-- 커버리지 가중치: {params.get('coverage_weight', 'N/A')} (순수 커버리지 목적함수)
+- 다양성 가중치: {params.get('coverage_weight', 'N/A')}
+- Priority Temperature: {params.get('priority_temperature', 'N/A')}
 
 ⚡ 최적화 결과:
 - 상태: {optimization_summary.get('status', 'unknown')}
 - 총 배분량: {optimization_summary.get('total_allocated', 'N/A')}
 - 배분률: {optimization_summary.get('allocation_rate', 0)*100:.1f}%
 - 배분 받은 매장: {optimization_summary.get('allocated_stores', 'N/A')}개
-"""
-                    
-        # 성과 평가 추가 (있는 경우)
-        if analysis_results and 'overall_evaluation' in analysis_results:
-            overall_eval = analysis_results['overall_evaluation']
-            summary_text += f"""
-🏅 성과 평가:
-- 색상 커버리지: {overall_eval.get('overall_color_coverage', 0):.3f}
-- 사이즈 커버리지: {overall_eval.get('overall_size_coverage', 0):.3f}
-- 배분 효율성: {overall_eval.get('overall_allocation_efficiency', 0):.4f}
-- 배분 균형성: {overall_eval.get('allocation_balance', 0):.3f}
-- 종합 등급: {overall_eval.get('grade', 'N/A')}
-- 종합 점수: {overall_eval.get('total_score', 0):.3f}
-"""
-        
-        summary_text += f"""
+{coverage_info}
 📁 생성된 파일들:
 - allocation_results.csv: 상세 할당 결과
-- store_summary.csv: 매장별 성과 요약
-- style_analysis.csv: 스타일별 커버리지 분석
-- top_performers.csv: 최고 성과 매장
-- scarce_effectiveness.csv: 희소 SKU 효과성
 - experiment_params.json: 실험 파라미터
 - experiment_summary.txt: 실험 요약
 

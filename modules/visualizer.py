@@ -36,11 +36,20 @@ class ResultVisualizer:
         
         # 0. Tier 기반 배분 가능량 계산 메서드 정의
         def calculate_max_allocatable_by_tier(sku, target_stores, tier_system, A, QSUM):
-            sku_target_stores = tier_system.get_sku_target_stores(sku, target_stores)
+            """SKU별 tier 기반 최대 배분 가능량 계산"""
+            # 기본 target_stores 사용 (SKU별 지정 매장 기능 제거됨)
+            sku_target_stores = target_stores
+            
+            if not sku_target_stores:
+                return A.get(sku, 0)
+            
+            # 각 매장별 tier에 따른 최대 배분량 합계
             tier_based_capacity = 0
             for store in sku_target_stores:
-                tier_info = tier_system.get_store_tier_info(store, sku_target_stores)
+                tier_info = tier_system.get_store_tier_info(store, target_stores)
                 tier_based_capacity += tier_info['max_sku_limit']
+            
+            # 실제 공급량과 tier 기반 용량 중 작은 값
             actual_supply = A.get(sku, 0)
             return min(actual_supply, tier_based_capacity)
         
@@ -110,7 +119,7 @@ class ResultVisualizer:
             max_allocatable_qty = calculate_max_allocatable_by_tier(sku, target_stores, tier_system, A, QSUM)
             sku_labels.append(f"{color}-{size}\n({total_allocated}/{max_allocatable_qty})")
         
-        # 5. 부가 통계 계산 (빈 셀, 컬러/사이즈 커버리지)
+        # 5. 부가 통계 계산 (빈 셀, 색상/사이즈 다양성)
 
         total_colors_style = df_sku_filtered['COLOR_CD'].nunique()
         total_sizes_style = df_sku_filtered['SIZE_CD'].nunique()
@@ -124,7 +133,7 @@ class ResultVisualizer:
             # row_qties is a list here – use count(0) instead of numpy comparison
             empty_cells_counts.append(row_qties.count(0))
 
-            # 색상/사이즈 커버리지
+            # 색상/사이즈 다양성
             allocated_skus_row = [selected_skus[col_idx] for col_idx, qty in enumerate(row_qties) if qty > 0]
             colors = set()
             sizes = set()
@@ -336,7 +345,7 @@ class ResultVisualizer:
             store_total = sum(final_allocation.get((sku, store), 0) for sku in SKUs)
             sku_count = sum(1 for sku in SKUs if final_allocation.get((sku, store), 0) > 0)
             
-            # 색상/사이즈 커버리지 계산
+            # 색상/사이즈 다양성 계산
             allocated_skus_for_store = [sku for sku in SKUs if final_allocation.get((sku, store), 0) > 0]
             colors = set()
             sizes = set()
@@ -373,8 +382,8 @@ class ResultVisualizer:
                 '매장_TIER': store_tier,
                 '총_배분량': store_total,
                 '배분_SKU수': sku_count,
-                '색상_커버리지': f"{color_coverage:.2%}",
-                '사이즈_커버리지': f"{size_coverage:.2%}",
+                '색상_다양성': f"{color_coverage:.2%}",
+                '사이즈_다양성': f"{size_coverage:.2%}",
                 '배분된_색상수': len(colors),
                 '배분된_사이즈수': len(sizes)
             })
@@ -431,7 +440,7 @@ class ResultVisualizer:
                 allocated_skus = len([sku for sku in SKUs if sum(final_allocation.get((sku, s), 0) for s in target_stores) > 0])
                 avg_store_allocation = total_allocated / len(target_stores) if len(target_stores) > 0 else 0
                 
-                # 매장별 평균 커버리지 계산
+                # 매장별 평균 다양성 계산
                 store_color_coverages = []
                 store_size_coverages = []
                 store_filled_cells = []
@@ -440,7 +449,7 @@ class ResultVisualizer:
                     # 해당 매장에 배분된 SKU들
                     allocated_skus_for_store = [sku for sku in SKUs if final_allocation.get((sku, store), 0) > 0]
                     
-                    # 색상/사이즈 커버리지 계산
+                    # 색상/사이즈 다양성 계산
                     colors = set()
                     sizes = set()
                     for sku in allocated_skus_for_store:
@@ -472,7 +481,7 @@ class ResultVisualizer:
                     '항목': [
                         '총_매장수', '총_SKU수', '총_배분량', '전체_공급량', '전체_배분률',
                         '배분받은_매장수', '배분된_SKU수', '평균_매장당_배분량',
-                        '평균_색상_커버리지', '평균_사이즈_커버리지', '평균_채워진_셀_개수',
+                        '평균_색상_다양성', '평균_사이즈_다양성', '평균_피팅_다양성',
                         '최적화_소요_시간'
                     ],
                     '값': [
