@@ -1,44 +1,54 @@
 """
-데이터 로드 및 전처리 모듈 (JSON 버전)
+데이터 로드 및 전처리 모듈 (순수 문자열 입력 전용)
 """
 
 import pandas as pd
 import json
-import os
 from config import DATA_PATH
 
 
-def try_read_json(file_path):
-    """JSON 파일을 읽습니다"""
+def load_text_data(text_content, data_type="ord"):
+    """순수 텍스트 문자열에서 JSON 데이터를 파싱합니다 (Thread-Safe)"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        print(f"성공적으로 읽음: {file_path}")
+        # 문자열을 JSON으로 파싱
+        data = json.loads(text_content)
+        print(f"✅ 문자열에서 로드: {data_type} 데이터 (Thread-Safe)")
         return data
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON 파싱 실패: {e}")
+        raise
     except Exception as e:
-        print(f"JSON 읽기 실패: {file_path} - {e}")
+        print(f"❌ 데이터 로드 실패: {e}")
         raise
 
 
 class DataLoader:
-    """데이터 로드 및 전처리를 담당하는 클래스 (JSON 버전)"""
+    """데이터 로드 및 전처리를 담당하는 클래스 (순수 문자열 입력 전용)"""
     
-    def __init__(self, data_path=DATA_PATH, sku_file='ord/ord.json', store_file='shop/shop.json'):
-        self.data_path = data_path
-        self.sku_file = sku_file
-        self.store_file = store_file
+    def __init__(self, sku_text, store_text):
+        """
+        Args:
+            sku_text: SKU 데이터 JSON 문자열 (필수)
+            store_text: 매장 데이터 JSON 문자열 (필수)
+        """
+        if not sku_text:
+            raise ValueError("SKU 데이터 문자열이 필요합니다.")
+        if not store_text:
+            raise ValueError("매장 데이터 문자열이 필요합니다.")
+            
+        self.sku_text = sku_text
+        self.store_text = store_text
+        
         self.df_sku = None
         self.df_store = None
         self.target_style = None
         self.df_sku_filtered = None
         
     def load_data(self):
-        """JSON 데이터 로드"""
-        # print("📊 JSON 데이터 로드 중...")
+        """순수 문자열에서 데이터 로드"""
         
-        # SKU JSON 데이터 로드
-        sku_file_path = os.path.join(self.data_path, self.sku_file)
-        sku_json_data = try_read_json(sku_file_path)
+        # SKU 데이터 로드
+        sku_json_data = load_text_data(self.sku_text, "ord")
         
         # JSON에서 DataFrame으로 변환
         sku_records = []
@@ -51,9 +61,8 @@ class DataLoader:
             })
         self.df_sku = pd.DataFrame(sku_records)
         
-        # 매장 JSON 데이터 로드
-        store_file_path = os.path.join(self.data_path, self.store_file)
-        store_json_data = try_read_json(store_file_path)
+        # 매장 데이터 로드
+        store_json_data = load_text_data(self.store_text, "shop")
         
         # JSON에서 DataFrame으로 변환
         store_records = []
@@ -70,9 +79,7 @@ class DataLoader:
         # 매장 데이터를 QTY_SUM 기준 내림차순 정렬
         self.df_store = self.df_store.sort_values('QTY_SUM', ascending=False).reset_index(drop=True)
         
-        print(f"✅ JSON 데이터 로드 완료 - SKU: {len(self.df_sku)}개, 매장: {len(self.df_store)}개")
-        print(f"   SKU 파일: {self.sku_file}")
-        print(f"   매장 파일: {self.store_file}")
+        print(f"✅ 문자열 기반 데이터 로드 완료 - SKU: {len(self.df_sku)}개, 매장: {len(self.df_store)}개")
         return self.df_sku, self.df_store
     
     def filter_by_style(self, target_style):
@@ -151,4 +158,10 @@ class DataLoader:
             'max_store_qty_sum': self.df_store['QTY_SUM'].iloc[0],
             'min_store_qty_sum': self.df_store['QTY_SUM'].iloc[-1],
             'avg_store_qty_sum': self.df_store['QTY_SUM'].mean()
-        } 
+        }
+
+
+# 편의 함수
+def create_data_loader_from_strings(sku_text, store_text):
+    """문자열에서 직접 DataLoader 생성"""
+    return DataLoader(sku_text=sku_text, store_text=store_text) 

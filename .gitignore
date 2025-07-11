@@ -70,5 +70,9 @@ Thumbs.db
 *.backup
 *~ 
 
-# csv_to_json_converter.py
+# converter.py
 csv_to_json_converter.py
+json_to_string_converter.py
+
+# converter 결과
+data_strings.py

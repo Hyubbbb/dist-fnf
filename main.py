@@ -19,7 +19,7 @@ from config import EXPERIMENT_SCENARIOS, DEFAULT_TARGET_STYLE, DEFAULT_SCENARIO
 
 def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARIO, 
                     show_detailed_output=False, create_visualizations=True,
-                    sku_file='ord/ord.json', store_file='shop/shop.json',
+                    sku_text=None, store_text=None,
                     save_allocation_results=True, save_experiment_summary=True,
                     save_png_matrices=True, save_excel_matrices=True):
     """
@@ -30,8 +30,8 @@ def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARI
         scenario: 실험 시나리오 이름
         show_detailed_output: 상세 출력 여부
         create_visualizations: 시각화 생성 여부
-        sku_file: SKU 데이터 파일명
-        store_file: 매장 데이터 파일명
+        sku_text: SKU 데이터 JSON 문자열 (필수)
+        store_text: 매장 데이터 JSON 문자열 (필수)
         save_allocation_results: allocation_results.csv 저장 여부
         save_experiment_summary: experiment_summary.txt 저장 여부
         save_png_matrices: step별 PNG 매트릭스 저장 여부
@@ -43,14 +43,17 @@ def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARI
     print("🚀 SKU 분배 최적화 시작")
     print(f"   대상 스타일: {target_style}")
     print(f"   시나리오: {scenario}")
-    print(f"   SKU 파일: {sku_file}")
-    print(f"   매장 파일: {store_file}")
+    print(f"   입력 방식: 직접 문자열 입력 (Thread-Safe)")
     print("="*50)
+    
+    # 입력 데이터 검증
+    if not sku_text or not store_text:
+        raise ValueError("SKU 문자열과 매장 문자열이 모두 필요합니다.")
     
     try:
         # 1. 데이터 로드 및 전처리
         print("\n📊 1단계: 데이터 로드 및 전처리")
-        data_loader = DataLoader(sku_file=sku_file, store_file=store_file)
+        data_loader = DataLoader(sku_text=sku_text, store_text=store_text)
         data_loader.load_data()
         data_loader.filter_by_style(target_style)
         data = data_loader.get_basic_data_structures()
@@ -265,7 +268,7 @@ def run_optimization(target_style=DEFAULT_TARGET_STYLE, scenario=DEFAULT_SCENARI
 
 
 def run_batch_experiments(target_styles=None, scenarios=None, create_visualizations=True,
-                         sku_file='ord/ord.json', store_file='shop/shop.json',
+                         sku_text=None, store_text=None,
                          save_allocation_results=True, save_experiment_summary=True,
                          save_png_matrices=True, save_excel_matrices=True):
     """
@@ -275,8 +278,8 @@ def run_batch_experiments(target_styles=None, scenarios=None, create_visualizati
         target_styles: 실험할 스타일 리스트 (None이면 기본 스타일만)
         scenarios: 실험할 시나리오 리스트 (None이면 모든 시나리오)
         create_visualizations: 시각화 생성 여부
-        sku_file: SKU 데이터 파일명
-        store_file: 매장 데이터 파일명
+        sku_text: SKU 데이터 JSON 문자열 (필수)
+        store_text: 매장 데이터 JSON 문자열 (필수)
         save_allocation_results: allocation_results.csv 저장 여부
         save_experiment_summary: experiment_summary.txt 저장 여부
         save_png_matrices: step별 PNG 매트릭스 저장 여부
@@ -292,9 +295,12 @@ def run_batch_experiments(target_styles=None, scenarios=None, create_visualizati
     print(f"🔬 배치 실험 시작:")
     print(f"   대상 스타일: {target_styles}")
     print(f"   시나리오: {scenarios}")
-    print(f"   SKU 파일: {sku_file}")
-    print(f"   매장 파일: {store_file}")
+    print(f"   입력 방식: 직접 문자열 입력 (Thread-Safe)")
     print(f"   총 실험 수: {len(target_styles) * len(scenarios)}개")
+    
+    # 입력 데이터 검증
+    if not sku_text or not store_text:
+        raise ValueError("SKU 문자열과 매장 문자열이 모두 필요합니다.")
     
     results = []
     
@@ -309,8 +315,8 @@ def run_batch_experiments(target_styles=None, scenarios=None, create_visualizati
                 scenario=scenario,
                 show_detailed_output=False,
                 create_visualizations=create_visualizations,
-                sku_file=sku_file,
-                store_file=store_file,
+                sku_text=sku_text,
+                store_text=store_text,
                 save_allocation_results=save_allocation_results,
                 save_experiment_summary=save_experiment_summary,
                 save_png_matrices=save_png_matrices,
@@ -364,12 +370,146 @@ if __name__ == "__main__":
     """
 
     
-    print("   배치 실험:")
-    # run_batch_experiments(['DWDJ68046', 'DWDJ8P046', 'DXDJ8C046', 'DXMT33044'],
+    print("   순수 문자열 입력 실험:")
+    
+    # 샘플 SKU 데이터 문자열
+    sku_text = """{
+  "metadata": {
+    "description": "SKU 발주 데이터",
+    "total_records": 11,
+    "data_type": "ord"
+  },
+  "skus": [
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "BKS",
+      "size_cd": "90",
+      "ord_qty": 208,
+      "sku_id": "DWWJ7D053_BKS_90"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "BKS",
+      "size_cd": "95",
+      "ord_qty": 347,
+      "sku_id": "DWWJ7D053_BKS_95"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "BKS",
+      "size_cd": "100",
+      "ord_qty": 283,
+      "sku_id": "DWWJ7D053_BKS_100"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "BKS",
+      "size_cd": "105",
+      "ord_qty": 139,
+      "sku_id": "DWWJ7D053_BKS_105"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "DKS",
+      "size_cd": "90",
+      "ord_qty": 139,
+      "sku_id": "DWWJ7D053_DKS_90"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "DKS",
+      "size_cd": "95",
+      "ord_qty": 347,
+      "sku_id": "DWWJ7D053_DKS_95"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "DKS",
+      "size_cd": "100",
+      "ord_qty": 241,
+      "sku_id": "DWWJ7D053_DKS_100"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "WHS",
+      "size_cd": "90",
+      "ord_qty": 241,
+      "sku_id": "DWWJ7D053_WHS_90"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "WHS",
+      "size_cd": "95",
+      "ord_qty": 416,
+      "sku_id": "DWWJ7D053_WHS_95"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "WHS",
+      "size_cd": "100",
+      "ord_qty": 208,
+      "sku_id": "DWWJ7D053_WHS_100"
+    },
+    {
+      "part_cd": "DWWJ7D053",
+      "color_cd": "WHS",
+      "size_cd": "105",
+      "ord_qty": 37,
+      "sku_id": "DWWJ7D053_WHS_105"
+    }
+  ]
+}"""
+
+    # 샘플 매장 데이터 문자열
+    store_text = """{
+  "metadata": {
+    "description": "매장 정보 데이터",
+    "total_records": 5,
+    "data_type": "shop"
+  },
+  "stores": [
+    {
+      "shop_id": "10050",
+      "shop_name": "롯데본점",
+      "qty_sum": 6444,
+      "yymm": "202411",
+      "dist_type": "백화점"
+    },
+    {
+      "shop_id": "10070",
+      "shop_name": "신세계강남",
+      "qty_sum": 5173,
+      "yymm": "202411",
+      "dist_type": "백화점"
+    },
+    {
+      "shop_id": "10007",
+      "shop_name": "롯데부산",
+      "qty_sum": 5105,
+      "yymm": "202411",
+      "dist_type": "백화점"
+    },
+    {
+      "shop_id": "10018",
+      "shop_name": "롯데잠실",
+      "qty_sum": 3945,
+      "yymm": "202411",
+      "dist_type": "백화점"
+    },
+    {
+      "shop_id": "50077",
+      "shop_name": "서수원(대-위)",
+      "qty_sum": 3511,
+      "yymm": "202411",
+      "dist_type": "대리점"
+    }
+  ]
+}"""
+    
     run_batch_experiments(['DWWJ7D053'],
-                          ['deterministic', 'temperature_50', 'random'],
-                          sku_file='ord/ord_real_25s_DWWJ7D053.json',
-                          store_file='shop/shop_real_control_25s.json',
+                          ['deterministic'],
+                          sku_text=sku_text,
+                          store_text=store_text,
                           save_allocation_results=True,      # allocation_results.csv 저장
                           save_experiment_summary=True,      # experiment_summary.txt 저장  
                           save_png_matrices=False,            # step별 PNG 매트릭스 저장
