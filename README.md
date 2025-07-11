@@ -70,77 +70,45 @@ dist-fnf/
 
 ### **Step 2. 데이터 준비**
 
-1. 프로젝트 루트에 `data` 폴더와 그 하위의 `ord`, `shop` 폴더를 생성합니다.
-    - 이 폴더들은 `.gitignore`에 의해 버전 관리에서 제외되므로, 최초 실행 시 직접 생성해야 합니다.
+**🔥 순수 문자열 입력 방식 (Pure String Input)**
 
-2. **`data/ord/`**: 발주(SKU) 데이터를 JSON 형태로 준비합니다.
+- 이 시스템은 이제 파일이 아닌, **JSON 형식의 텍스트 문자열**을 직접 입력받아 작동합니다. 
+- 이는 백엔드 시스템 연동이나 API 호출을 통해 데이터를 실시간으로 받아 처리하는 상황을 가정하며, 파일 I/O 없이 메모리 내에서 모든 데이터 처리가 이루어져 **스레드 안전성(Thread-Safe)**과 **성능**을 보장합니다.
+- `main.py`의 메인 실행부에는 이 방식을 활용한 예시 데이터가 문자열로 직접 정의되어 있습니다.
+
+#### 데이터 포맷 예시
+
+데이터는 아래와 같은 JSON 구조를 가진 문자열이어야 합니다.
+
+1.  **SKU 데이터 (발주량)**
     -   **필수 필드**: `part_cd`, `color_cd`, `size_cd`, `ord_qty`
-    -   **예시 (`ord.json`)**:
+    -   **예시**:
         ```json
         {
-          "metadata": {
-            "description": "SKU 발주 데이터",
-            "total_records": 3,
-            "data_type": "ord"
-          },
+          "metadata": { "description": "SKU 발주 데이터" },
           "skus": [
             {
-              "part_cd": "ABC123456",
-              "color_cd": "A",
-              "size_cd": "95",
-              "ord_qty": 111,
-              "sku_id": "ABC123456_A_95"
+              "part_cd": "ABC123456", "color_cd": "A", "size_cd": "95", "ord_qty": 111
             },
             {
-              "part_cd": "ABC123456",
-              "color_cd": "A",
-              "size_cd": "100",
-              "ord_qty": 222,
-              "sku_id": "ABC123456_A_100"
-            },
-            {
-              "part_cd": "ABC123456",
-              "color_cd": "B",
-              "size_cd": "95",
-              "ord_qty": 12345,
-              "sku_id": "ABC123456_B_95"
+              "part_cd": "ABC123456", "color_cd": "A", "size_cd": "100", "ord_qty": 222
             }
           ]
         }
         ```
 
-3. **`data/shop/`**: 매장 데이터를 JSON 형태로 준비합니다.
+2.  **매장 데이터**
     -   **필수 필드**: `shop_id`, `shop_name`, `qty_sum`
-    -   **선택 필드**: `yymm`, `dist_type`
-    -   **예시 (`shop.json`)**:
+    -   **예시**:
         ```json
         {
-          "metadata": {
-            "description": "매장 정보 데이터",
-            "total_records": 3,
-            "data_type": "shop"
-          },
+          "metadata": { "description": "매장 정보 데이터" },
           "stores": [
             {
-              "shop_id": "11111",
-              "shop_name": "한국백화점(직)",
-              "qty_sum": 1234,
-              "yymm": "202411",
-              "dist_type": "백화점"
+              "shop_id": "11111", "shop_name": "한국백화점(직)", "qty_sum": 1234
             },
             {
-              "shop_id": "22222",
-              "shop_name": "한국아울렛(직)",
-              "qty_sum": 4567,
-              "yymm": "202411",
-              "dist_type": "아울렛"
-            },
-            {
-              "shop_id": "33333",
-              "shop_name": "한국본점",
-              "qty_sum": 2345,
-              "yymm": "202411",
-              "dist_type": "직영점"
+              "shop_id": "22222", "shop_name": "한국아울렛(직)", "qty_sum": 4567
             }
           ]
         }
@@ -148,22 +116,39 @@ dist-fnf/
 
 ### **Step 3. 실험 실행**
 
-`main.py` 파일의 하단 `if __name__ == "__main__":` 부분을 수정하여 실험을 실행합니다.
+`main.py` 파일의 하단 `if __name__ == "__main__":` 부분을 수정하여 실험을 실행합니다. `sku_text`와 `store_text` 변수에 원하는 데이터를 문자열 형태로 할당한 후, `run_batch_experiments` 함수를 호출합니다.
 
 ```python
 # main.py
 if __name__ == "__main__":
+    
+    # 1. SKU 데이터와 매장 데이터를 JSON 형식의 문자열로 준비합니다.
+    sku_text = """{
+      "skus": [
+        { "part_cd": "DWWJ7D053", "color_cd": "BKS", "size_cd": "90", "ord_qty": 208 },
+        { "part_cd": "DWWJ7D053", "color_cd": "BKS", "size_cd": "95", "ord_qty": 347 }
+      ]
+    }"""
+
+    store_text = """{
+      "stores": [
+        { "shop_id": "10050", "shop_name": "롯데본점", "qty_sum": 6444 },
+        { "shop_id": "10070", "shop_name": "신세계강남", "qty_sum": 5173 }
+      ]
+    }"""
+    
+    # 2. 실험 함수를 호출합니다.
     run_batch_experiments(
-        target_styles=['DWWJ7D053'], # 실험할 스타일 코드
-        scenarios=['deterministic', 'temperature_50', 'random'], # 실험할 시나리오
-        sku_file='ord/ord_real_25s_DWWJ7D053.json', # 사용할 SKU 데이터 파일
-        store_file='shop/shop_real_control_25s.json', # 사용할 매장 데이터 파일
+        target_styles=['DWWJ7D053'],                           # 실험할 스타일 코드
+        scenarios=['deterministic', 'temperature_50'],         # 실험할 시나리오
+        sku_text=sku_text,                                     # SKU 데이터 문자열 전달
+        store_text=store_text,                                 # 매장 데이터 문자열 전달
         
         # --- 출력 파일 제어 ---
         save_allocation_results=True,  # allocation_results.csv 저장 여부
         save_experiment_summary=True,  # experiment_summary.txt 저장 여부
-        save_png_matrices=True,        # PNG 히트맵 저장 여부
-        save_excel_matrices=True       # Excel 리포트 저장 여부
+        save_png_matrices=False,       # PNG 히트맵 저장 안함
+        save_excel_matrices=True       # Excel 리포트 저장
     )
 ```
 
