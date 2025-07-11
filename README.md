@@ -61,6 +61,7 @@ dist-fnf/
 
 ### **Step 1. 환경 설정**
 
+-   **Python 버전**: Python 3.13.3 이상 권장
 -   요구사항에 명시된 패키지를 설치합니다.
     ```bash
     pip install -r requirements.txt
