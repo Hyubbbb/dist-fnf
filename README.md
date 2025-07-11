@@ -48,9 +48,9 @@ dist-fnf/
 │   └── experiment_manager.py           # 실험 관리 (결과 저장, 디렉토리 관리, 파일명 생성 등)
 ├── data/                               # Input 데이터 저장 폴더
 │   ├── ord/                            # SKU 발주 데이터
-│   │   └── *.csv                       # 스타일별 발주 데이터 파일들
+│   │   └── *.json                      # 스타일별 발주 데이터 파일들
 │   └── shop/                           # 매장 정보 데이터
-│       └── *.csv                       # 매장별 매출 데이터 파일들
+│       └── *.json                      # 매장별 매출 데이터 파일들
 └── output/                             # 실험 Output 저장 폴더
     └── {style}/                        # 스타일별 결과 하위 폴더
         └── {scenario}/                 # 시나리오별 결과 하위 폴더
@@ -73,23 +73,78 @@ dist-fnf/
 1. 프로젝트 루트에 `data` 폴더와 그 하위의 `ord`, `shop` 폴더를 생성합니다.
     - 이 폴더들은 `.gitignore`에 의해 버전 관리에서 제외되므로, 최초 실행 시 직접 생성해야 합니다.
 
-2. **`data/ord/`**: 발주(SKU) 데이터를 준비합니다.
-    -   **필수 컬럼**: `PART_CD`, `COLOR_CD`, `SIZE_CD`, `ORD_QTY`
-    -   **예시 (`ord.csv`)**:
-        | PART_CD   | COLOR_CD | SIZE_CD | ORD_QTY |
-        |-----------|----------|---------|---------|
-        | ABC123456 | A        | 95      | 111     |
-        | ABC123456 | A        | 100     | 222     |
-        | ABC123456 | B        | 95      | 12345   |
+2. **`data/ord/`**: 발주(SKU) 데이터를 JSON 형태로 준비합니다.
+    -   **필수 필드**: `part_cd`, `color_cd`, `size_cd`, `ord_qty`
+    -   **예시 (`ord.json`)**:
+        ```json
+        {
+          "metadata": {
+            "description": "SKU 발주 데이터",
+            "total_records": 3,
+            "data_type": "ord"
+          },
+          "skus": [
+            {
+              "part_cd": "ABC123456",
+              "color_cd": "A",
+              "size_cd": "95",
+              "ord_qty": 111,
+              "sku_id": "ABC123456_A_95"
+            },
+            {
+              "part_cd": "ABC123456",
+              "color_cd": "A",
+              "size_cd": "100",
+              "ord_qty": 222,
+              "sku_id": "ABC123456_A_100"
+            },
+            {
+              "part_cd": "ABC123456",
+              "color_cd": "B",
+              "size_cd": "95",
+              "ord_qty": 12345,
+              "sku_id": "ABC123456_B_95"
+            }
+          ]
+        }
+        ```
 
-3. **`data/shop/`**: 매장 데이터를 준비합니다.
-    -   **필수 컬럼**: `SHOP_ID`, `SHOP_NM_SHORT`, `QTY_SUM`
-    -   **예시 (`shop.csv`)**:
-        | SHOP_ID | SHOP_NM_SHORT        | QTY_SUM |
-        |---------|----------------------|---------|
-        | 11111   | 한국백화점(직)         | 1234    |
-        | 22222   | 한국아울렛(직)         | 4567    |
-        | 33333   | 한국본점              | 2345    |
+3. **`data/shop/`**: 매장 데이터를 JSON 형태로 준비합니다.
+    -   **필수 필드**: `shop_id`, `shop_name`, `qty_sum`
+    -   **선택 필드**: `yymm`, `dist_type`
+    -   **예시 (`shop.json`)**:
+        ```json
+        {
+          "metadata": {
+            "description": "매장 정보 데이터",
+            "total_records": 3,
+            "data_type": "shop"
+          },
+          "stores": [
+            {
+              "shop_id": "11111",
+              "shop_name": "한국백화점(직)",
+              "qty_sum": 1234,
+              "yymm": "202411",
+              "dist_type": "백화점"
+            },
+            {
+              "shop_id": "22222",
+              "shop_name": "한국아울렛(직)",
+              "qty_sum": 4567,
+              "yymm": "202411",
+              "dist_type": "아울렛"
+            },
+            {
+              "shop_id": "33333",
+              "shop_name": "한국본점",
+              "qty_sum": 2345,
+              "yymm": "202411",
+              "dist_type": "직영점"
+            }
+          ]
+        }
+        ```
 
 ### **Step 3. 실험 실행**
 
@@ -101,8 +156,8 @@ if __name__ == "__main__":
     run_batch_experiments(
         target_styles=['DWWJ7D053'], # 실험할 스타일 코드
         scenarios=['deterministic', 'temperature_50', 'random'], # 실험할 시나리오
-        sku_file='ord/ord_real_25s_DWWJ7D053.csv', # 사용할 SKU 데이터 파일
-        store_file='shop/shop_real_control_25s.csv', # 사용할 매장 데이터 파일
+        sku_file='ord/ord_real_25s_DWWJ7D053.json', # 사용할 SKU 데이터 파일
+        store_file='shop/shop_real_control_25s.json', # 사용할 매장 데이터 파일
         
         # --- 출력 파일 제어 ---
         save_allocation_results=True,  # allocation_results.csv 저장 여부
