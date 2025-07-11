@@ -33,44 +33,29 @@
     -   **방식**: 
         - 남은 재고를 매장별 Tier에 설정된 최대 한도 내에서 우선순위가 높은 매장부터 추가로 배분하여, 공급량을 최대한 활용하고 매출이 높은 매장에 더 많은 기회를 제공합니다.
 
-## 🏗️ 프로젝트 구조
+## 🏗️ 디렉토리 구조
 
-```mermaid
-graph TD
-    subgraph "Project Root"
-        A[main.py] --> B[config.py]
-        A --> C[modules]
-        A --> D[data]
-        A --> E[output]
-    end
-
-    subgraph "modules"
-        C --> C1[data_loader.py]
-        C --> C2[store_tier_system.py]
-        C --> C4[three_step_optimizer.py]
-        C --> C5[analyzer.py]
-        C --> C6[visualizer.py]
-        C --> C7[experiment_manager.py]
-    end
-
-    subgraph "Input/Output"
-        D[data/ord/*.csv]
-        D2[data/shop/*.csv]
-        E[output/{style}/{scenario}/{timestamp}]
-    end
 ```
-
--   **`main.py`**: 최적화 실행 및 실험 관리
--   **`config.py`**: Tier, 시나리오 등 주요 파라미터 설정
--   **`modules/`**: 핵심 로직 모듈
-    -   `data_loader.py`: 데이터 로딩 및 전처리
-    -   `store_tier_system.py`: 매장 Tier 분류
-    -   `three_step_optimizer.py`: **핵심 3-Step 최적화 엔진**
-    -   `analyzer.py`: 결과 분석 (다양성 등)
-    -   `visualizer.py`: 결과 시각화 (Excel, PNG)
-    -   `experiment_manager.py`: 실험 결과 파일 관리
--   **`data/`**: 입력 데이터 폴더
--   **`output/`**: 결과 파일 저장 폴더
+dist-fnf/
+├── main.py                             # 실험 실행 및 전체 최적화 파이프라인 시작점
+├── config.py                           # 실험 설정값 (Tier, 시나리오 등) 관리
+├── modules/                            # 핵심 최적화 및 분석 로직 모듈 모음
+│   ├── data_loader.py                  # 발주량 및 매장 데이터 로딩 및 전처리
+│   ├── store_tier_system.py            # 매장 매출 기준으로 Tier 분류 로직 (보완 필요)
+│   ├── three_step_optimizer.py         # 3-Step 최적화 로직 (MILP + Rule-based + Rule-based)
+│   ├── analyzer.py                     # 배분 결과 메트릭(직/간접 다양성) 및 통계 분석
+│   ├── visualizer.py                   # 배분 결과 시각화 파일 생성(히트맵 & 엑셀)
+│   └── experiment_manager.py           # 실험 관리 (결과 저장, 디렉토리 관리, 파일명 생성 등)
+├── data/                               # Input 데이터 저장 폴더
+│   ├── ord/                            # SKU 발주 데이터
+│   │   └── *.csv                       # 스타일별 발주 데이터 파일들
+│   └── shop/                           # 매장 정보 데이터
+│       └── *.csv                       # 매장별 매출 데이터 파일들
+└── output/                             # 실험 Output 저장 폴더
+    └── {style}/                        # 스타일별 결과 하위 폴더
+        └── {scenario}/                 # 시나리오별 결과 하위 폴더
+            └── {timestamp}/            # 실행 시각 기준 결과 폴더 (결과물 자동 저장 위치)
+```
 
 ## ⚙️ 사용법
 
