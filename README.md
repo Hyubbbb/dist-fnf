@@ -59,7 +59,7 @@ dist-fnf/
 
 ## ⚙️ 사용법
 
-### **1. 환경 설정**
+### **Step 1. 환경 설정**
 
 -   요구사항에 명시된 패키지를 설치합니다.
     ```bash
@@ -67,9 +67,12 @@ dist-fnf/
     ```
 -   **주요 패키지**: `pandas`, `numpy`, `pulp`, `matplotlib`, `seaborn`, `openpyxl`
 
-### **2. 데이터 준비**
+### **Step 2. 데이터 준비**
 
--   **`data/ord/`**: 발주(SKU) 데이터를 준비합니다.
+1.   프로젝트 루트에 `data` 폴더와 그 하위의 `ord`, `shop` 폴더를 생성합니다. 
+    -   이 폴더들은 `.gitignore`에 의해 버전 관리에서 제외되므로, 최초 실행 시 직접 생성해야 합니다.
+
+2.   **`data/ord/`**: 발주(SKU) 데이터를 준비합니다.
     -   **필수 컬럼**: `PART_CD`, `COLOR_CD`, `SIZE_CD`, `ORD_QTY`
     -   **예시 (`ord.csv`)**:
         | PART_CD   | COLOR_CD | SIZE_CD | ORD_QTY |
@@ -78,7 +81,7 @@ dist-fnf/
         | ABC123456 | A        | 100     | 222     |
         | ABC123456 | B        | 95      | 12345   |
 
--   **`data/shop/`**: 매장 데이터를 준비합니다.
+3.   **`data/shop/`**: 매장 데이터를 준비합니다.
     -   **필수 컬럼**: `SHOP_ID`, `SHOP_NM_SHORT`, `QTY_SUM`
     -   **예시 (`shop.csv`)**:
         | SHOP_ID | SHOP_NM_SHORT        | QTY_SUM |
@@ -87,7 +90,7 @@ dist-fnf/
         | 22222   | 한국아울렛(직)         | 4567    |
         | 33333   | 한국본점              | 2345    |
 
-### **3. 실험 실행**
+### **Step 3. 실험 실행**
 
 `main.py` 파일의 하단 `if __name__ == "__main__":` 부분을 수정하여 실험을 실행합니다.
 
